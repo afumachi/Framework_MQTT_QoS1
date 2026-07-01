@@ -46,9 +46,15 @@ void Phy_radio_send_UL() {
 
   // =================Informações de gerência do pacote Início da montagem do pacote de UL
   PacoteUL[0] = RSSI_DL;
-  
-  SNR_DL = ((SNR_DL + 30) * 4); // Offset de 30 para o valor da SNR que tem uma casa decimal e ao multiplicar por 4 fica inteiro
-  SNR_DL_inteiro = int(SNR_DL);
+
+  // Trava o valor entre -30 e +30 para evitar que o byte estoure
+  if (SNR_DL < -30.0) SNR_DL = -30.0;
+  if (SNR_DL > 30.0) SNR_DL = 30.0;
+
+  // Usamos uint8_t (byte) para ocupar apenas 1 byte na memória.
+  // Usamos a função round() para garantir que o número float seja 
+  // arredondado corretamente antes de virar inteiro.
+  SNR_DL_inteiro = (uint8_t)round((SNR_DL + 30.0) * 4.0); // Offset de 30.0dB e passo de 0.25dB (* 4.0)
   PacoteUL[1] = byte(SNR_DL_inteiro);
  
   // ================= TRANMISSÃO DO PACOTE ENVIDADO PELO ESP32 PARA O RFM95

@@ -87,10 +87,10 @@ byte  PacoteDL[Tamanho_pacote];
 byte  PacoteUL[Tamanho_pacote];
 int   ID_gateway;
 
-int   RSSI_dBm_UL;
-int   RSSI_UL;
-float SNR_UL;
-int   SNR_UL_inteiro;
+int       RSSI_dBm_UL;
+int       RSSI_UL;
+float     SNR_UL;
+uint8_t   SNR_UL_inteiro;
 
 // =====================================================================
 //                     8 - Variáveis MQTT

@@ -95,21 +95,19 @@ void Phy_mqtt_send_UL() {
     RSSI_UL = (int)(((RSSI_dBm_UL + 74) * 2) + 256);
   }
 
+  // 1. Trava o valor entre -30 e +30 para evitar que o byte estoure
+  if (SNR_UL < -30.0) SNR_UL = -30.0;
+  if (SNR_UL > 30.0) SNR_UL = 30.0;
 
-  SNR_UL = int((SNR_UL + 30) * 4);
-
-  if (SNR_UL >= 255){
-    SNR_UL = 255;
-  }
-
-  if (SNR_UL <= 0){
-    SNR_UL = 0;
-  }
+  // Usamos uint8_t (byte) para ocupar apenas 1 byte na memória.
+  // Usamos a função round() para garantir que o número float seja 
+  // arredondado corretamente antes de virar inteiro.
+  SNR_UL_inteiro = (uint8_t)round((SNR_UL + 30.0) * 4.0); // Offset de 30.0dB e passo de 0.25dB (* 4.0)
 
   // --- Armazena informações de gerência no pacote UL ---
   PacoteUL[2] = RSSI_UL;
   //SNR_UL      = SNR_UL * 100;
-  SNR_UL_inteiro = (int)SNR_UL;
+  //SNR_UL_inteiro = (int)SNR_UL;
   PacoteUL[3] = (byte)SNR_UL_inteiro;
 
   // --- Publica os 20 bytes no tópico UL, com QoS1 (at least once) ---

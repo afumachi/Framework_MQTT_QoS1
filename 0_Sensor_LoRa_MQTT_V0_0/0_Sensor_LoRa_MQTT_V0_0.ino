@@ -33,7 +33,7 @@
 int RSSI_dBm_DL; // Variável com a potência rádio recebida (RSSI) em dBm
 int RSSI_DL;     // Variável de mapeamento da RSSI em um valor de 0 a 255 para colocar no pacote
 float SNR_DL;    // Variável com a relação sinal ruído
-int SNR_DL_inteiro; // Variável inteira para enviar a SNR, que será convertida para a SNR original no Python
+uint8_t SNR_DL_inteiro; // Variável inteira para enviar a SNR, que será convertida para a SNR original no Python
 
 // ============== CAMADA MAC
 #define Tamanho_pacote 20

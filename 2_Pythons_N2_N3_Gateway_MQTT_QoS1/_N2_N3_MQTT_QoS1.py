@@ -175,21 +175,22 @@ try:
                 rssi_dl_bruto = Pacote_UL[0]
                 RSSI_DL = ((rssi_dl_bruto - 256) / 2.0) - 74 if rssi_dl_bruto > 128 else (rssi_dl_bruto / 2.0) - 74
 
-                # -------- Decodifica SNR DL (byte 1) --------
-                SNR_DL = (Pacote_UL[1] / 4) - 30
+                # -------- Decodifica SNR DL (byte 1) em duas casa decimais --------
+                #SNR_DL = (Pacote_UL[1] / 4) - 30
+                SNR_DL = round((Pacote_UL[1] / 4) - 30, 2)
 
                 # -------- Decodifica RSSI UL (byte 2) --------
                 rssi_ul_bruto = Pacote_UL[2]
                 RSSI_UL = ((rssi_ul_bruto - 256) / 2.0) - 74 if rssi_ul_bruto > 128 else (rssi_ul_bruto / 2.0) - 74
 
-                # -------- Decodifica SNR UL (byte 3) --------
-                SNR_UL = (Pacote_UL[3] / 4) - 30
+                # -------- Decodifica SNR UL (byte 3) em duas casa decimais --------
+                #SNR_UL = (Pacote_UL[3] / 4) - 30
+                SNR_UL = round((Pacote_UL[3] / 4) - 30, 2)
 
                 # -------- Camada de Aplicação: Luminosidade (bytes 18-19) --------
                 luminosidade = (Pacote_UL[18] * 256) + Pacote_UL[19]
-
-                PSR = (1.00 - (perda_pacote / medidas)) * 100                
-                print(f"Pacote [UL] {j:03d} | RSSI_DL={RSSI_DL:.1f} dBm | RSSI_UL={RSSI_UL:.1f} dBm | SNR_DL={SNR_DL:.1f} dB | SNR_UL={SNR_UL:.1f} dB | Lum={luminosidade} | LED={Comando_LED_amarelo}")
+             
+                print(f"Pacote [UL] {j:03d} | RSSI_DL={RSSI_DL:.1f} dBm | RSSI_UL={RSSI_UL:.1f} dBm | SNR_DL={SNR_DL:.2f} dB | SNR_UL={SNR_UL:.2f} dB | Lum={luminosidade} | LED={Comando_LED_amarelo}")
 
                 # Salva dados em arquivo
                 with open(arquivo_gerencia, 'a+') as f:
@@ -209,6 +210,7 @@ try:
                     print(f"{time.asctime()};{j};;", file=Log_dados)
 
         # ----- Resumo do teste -----
+        PSR = (1.00 - (perda_pacote / medidas)) * 100   
         print(f"\nTeste concluído: {medidas} Pacotes DL enviados | {perda_pacote} Pacotes Perdidos | PSR {PSR} %")
 
         if Grava_log == 1:
