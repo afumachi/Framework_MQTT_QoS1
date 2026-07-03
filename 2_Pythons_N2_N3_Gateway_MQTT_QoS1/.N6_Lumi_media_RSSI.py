@@ -7,7 +7,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 import matplotlib.style as style
 style.use("ggplot")
-MAX_PONTOS = 60
+MAX_PONTOS = 100
 def atualizar_grafico(ax1, ax2, canvas, raiz):
     valores_lum = []
     valores_media = []

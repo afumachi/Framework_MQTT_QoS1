@@ -163,7 +163,7 @@ try:
             print(f"Pacote [DL] {j:03d} publicado no broker | LED={Comando_LED_amarelo}")
 
             # Aguarda antes do próximo ciclo de pacotes DL-UL
-            time.sleep(Tempo_entre_pacotes)
+            time.sleep(Tempo_entre_pacotes-1.5)
 
             # -------- Aguarda pacote UL (timeout = Tempo_entre_pacotes) --------
             Pacote_UL_novo = Pacote_UL_status.wait(timeout=Tempo_entre_pacotes)
