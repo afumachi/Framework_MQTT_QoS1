@@ -4,8 +4,10 @@
 # 
 # ======================================================================
 #
-# Última versão: PKLoRa MQTT - 27-06-2026
+# Última versão: PKLoRa MQTT - 10-07-2026
 # Branquinho / Luís Felipe / Anderson
+#
+# Adicionado o Broker MOSQUITTO ao Framework
 # 
 # ======================================================================
 
@@ -20,12 +22,13 @@ import os
 import threading
 
 # ===== Configurações MQTT =====
-BROKER        = "broker.hivemq.com"
+BROKER        = "test.mosquitto.org"
+#BROKER        = "broker.hivemq.com"
 PORTA_MQTT    = 1883
 
 # MODIFIQUE O TOPIC_DL E TOPIC_UL de acordo com SEU_NOME
-TOPIC_DL      = "mot_lora_mqtt/gateway/downlink"   # Python publica → ESP32 assina
-TOPIC_UL      = "mot_lora_mqtt/gateway/uplink"     # ESP32 publica  → Python assina
+TOPIC_DL      = "mot_lora_mqtt_FUMACHI/gateway/downlink"   # Python publica → ESP32 assina
+TOPIC_UL      = "mot_lora_mqtt_FUMACHI/gateway/uplink"     # ESP32 publica  → Python assina
 
 # QoS usado nos dois sentidos (DL e UL). QoS1 = "at least once": o broker
 # confirma (PUBACK) e há retransmissão se a confirmação não chegar.
@@ -34,6 +37,8 @@ MQTT_QOS      = 1
 
 # ===== Variáveis globais =====
 Tamanho_pacote = 20
+medidas = 0
+teste = 0
 
 # Evento para sinalizar chegada de pacote UL =====
 Pacote_UL_status = threading.Event()
@@ -42,7 +47,7 @@ Pacote_UL_payload = bytearray(Tamanho_pacote)
 # ===== Callbacks MQTT
 def on_connect(client, userdata, flags, reason_code, properties):
     if reason_code == 0:
-        print("[MQTT] Conectado ao broker HiveMQ com sucesso.")
+        print("[MQTT] Conectado ao Broker MQTT com sucesso.")
         client.subscribe(TOPIC_UL, qos=MQTT_QOS)
         print(f"[MQTT] Inscrito no tópico: {TOPIC_UL} (QoS{MQTT_QOS})")
     else:
@@ -62,7 +67,9 @@ def on_message(client, userdata, msg):
 
 def on_disconnect(client, userdata, flags, reason_code, properties):
     if reason_code != 0:
-        print(f"[MQTT] Desconectado inesperadamente (rc={reason_code}). Tentando reconectar...")
+        print(f"[MQTT] Desconectado inesperadamente (rc={reason_code}). Tentando reconectar...")      
+        # Utilizando loop_start() neste código, caso NÃO desmarque a linha abaixo:
+        # client.reconnect()
 
 # ===== Inicialização do cliente MQTT =====
 client = mqtt.Client(CallbackAPIVersion.VERSION2)
@@ -71,7 +78,7 @@ client.on_message    = on_message
 client.on_disconnect = on_disconnect
 client.on_publish    = on_publish
 
-print("[MQTT] Conectando ao broker.hivemq.com porta 1883...")
+print("[MQTT] Conectando ao broker MQTT - porta 1883...")
 client.connect(BROKER, PORTA_MQTT, keepalive=60)
 client.loop_start()   # Thread de fundo para receber mensagens
 
@@ -123,7 +130,7 @@ try:
         PSR = 0
 
         # ----- Montagem e envio dos pacotes -----
-        for j in range(1, medidas + 1):
+        for teste in range(1, medidas + 1):
 
             # -------- Camada de Aplicação DL: lê comando LED --------
             # Descobre a pasta onde o script atual está salvo
@@ -159,11 +166,30 @@ try:
             # -------- Publica pacote DL no broker MQTT (QoS1) --------
             Pacote_UL_status.clear()
             result = client.publish(TOPIC_DL, bytes(Pacote_DL), qos=MQTT_QOS)
-            result.wait_for_publish()
-            print(f"Pacote [DL] {j:03d} publicado no broker | LED={Comando_LED_amarelo}")
+            # No seu loop principal:
+            if client.is_connected():
+                try:
+                    # result é o retorno de client.publish(...)
+                    result.wait_for_publish(timeout=Tempo_entre_pacotes)  # Evita travar para sempre se cair durante a espera
+                    print(f"Pacote [DL] {teste:03d} publicado no broker | LED={Comando_LED_amarelo}")
+                except RuntimeError as e:
+                    print(f"[MQTT Erro] Falha ao aguardar publicação: {e}")
+                    # Aqui você pode tratar a queda: ex. salvar o pacote ou esperar reconectar
+                except Exception as e:
+                    print(f"[Erro] Outro erro ocorreu: {e}")
+            else:
+                print("[MQTT] Não foi possível publicar. Cliente desconectado.")
+                # Inserir Lógica de contingência se o cliente já estiver deslogado
+                medidas = 0
+                client.loop_stop()
+                client.disconnect()
+                print("[MQTT] Desconectado do broker.")
+
+            #result.wait_for_publish()
+            #print(f"Pacote [DL] {teste:03d} publicado no broker | LED={Comando_LED_amarelo}")
 
             # Aguarda antes do próximo ciclo de pacotes DL-UL
-            time.sleep(Tempo_entre_pacotes-1.5)
+            time.sleep(Tempo_entre_pacotes/2)
 
             # -------- Aguarda pacote UL (timeout = Tempo_entre_pacotes) --------
             Pacote_UL_novo = Pacote_UL_status.wait(timeout=Tempo_entre_pacotes)
@@ -190,7 +216,7 @@ try:
                 # -------- Camada de Aplicação: Luminosidade (bytes 18-19) --------
                 luminosidade = (Pacote_UL[18] * 256) + Pacote_UL[19]
              
-                print(f"Pacote [UL] {j:03d} | RSSI_DL={RSSI_DL:.1f} dBm | RSSI_UL={RSSI_UL:.1f} dBm | SNR_DL={SNR_DL:.2f} dB | SNR_UL={SNR_UL:.2f} dB | Lum={luminosidade} | LED={Comando_LED_amarelo}")
+                print(f"Pacote [UL] {teste:03d} | RSSI_DL={RSSI_DL:.1f} dBm | RSSI_UL={RSSI_UL:.1f} dBm | SNR_DL={SNR_DL:.2f} dB | SNR_UL={SNR_UL:.2f} dB | Lum={luminosidade} | LED={Comando_LED_amarelo}")
 
                 # Salva dados em arquivo
                 with open(arquivo_gerencia, 'a+') as f:
@@ -199,15 +225,15 @@ try:
                     print(luminosidade, file=f)
 
                 if Grava_log == 1:
-                    print(f"{time.asctime()};{j};{RSSI_DL};{RSSI_UL};{SNR_DL};{SNR_UL};{luminosidade};{Comando_LED_amarelo}", file=Log_dados)
+                    print(f"{time.asctime()};{teste};{RSSI_DL};{RSSI_UL};{SNR_DL};{SNR_UL};{luminosidade};{Comando_LED_amarelo}", file=Log_dados)
             else:
                 perda_pacote = perda_pacote + 1
-                print(f"Pacote [UL] {j:03d} | TIMEOUT - Pacote UL não recebido")
+                print(f"Pacote [UL] {teste:03d} | TIMEOUT - Pacote UL não recebido")
                 with open(arquivo_gerencia, 'a+') as f:
-                    print(f"{j};;{perda_pacote}", file=f)
+                    print(f"{teste};;{perda_pacote}", file=f)
 
                 if Grava_log == 1:
-                    print(f"{time.asctime()};{j};;", file=Log_dados)
+                    print(f"{time.asctime()};{teste};;", file=Log_dados)
 
         # ----- Resumo do teste -----
         PSR = (1.00 - (perda_pacote / medidas)) * 100   

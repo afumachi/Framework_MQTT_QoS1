@@ -1,6 +1,6 @@
 /*
-  MoT LoRa Site Survey Versão Zero | WissTek IoT
-  Última versão: Branquinho e Felipe (Adaptado para ESP32 - Kit PKLORa)
+  MoT LoRa MQTT Versão Zero | WissTek IoT | Nó Sensor - Framework MQTT
+  Última versão: Branquinho, Felipe ,Anderson e Luís Felipe (Adaptado para ESP32 - Kit PKLORa)
 */
 
 //=======================================================================
