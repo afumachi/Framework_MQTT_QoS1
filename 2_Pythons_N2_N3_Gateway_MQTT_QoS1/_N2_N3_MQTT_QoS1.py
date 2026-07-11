@@ -169,11 +169,11 @@ try:
             # No seu loop principal:
             if client.is_connected():
                 try:
-                    # result é o retorno de client.publish(...)
-                    result.wait_for_publish(timeout=Tempo_entre_pacotes)  # Evita travar para sempre se cair durante a espera
+                    # Aguarda confirmação da publicação do Pacote DL pelo retorno do result client.publish(timeout = tempo entre pacotes)
+                    result.wait_for_publish(timeout=Tempo_entre_pacotes)
                     print(f"Pacote [DL] {teste:03d} publicado no broker | LED={Comando_LED_amarelo}")
                 except RuntimeError as e:
-                    print(f"[MQTT Erro] Falha ao aguardar publicação: {e}")
+                    print(f"[MQTT Erro] Falha ao aguardar publicação: {e} timeout > tempo entre os pacotes")
                     # Aqui você pode tratar a queda: ex. salvar o pacote ou esperar reconectar
                 except Exception as e:
                     print(f"[Erro] Outro erro ocorreu: {e}")
@@ -191,7 +191,7 @@ try:
             # Aguarda antes do próximo ciclo de pacotes DL-UL
             time.sleep(Tempo_entre_pacotes/2)
 
-            # -------- Aguarda pacote UL (timeout = Tempo_entre_pacotes) --------
+            # Aguarda novo pacote UL publicado pelo Gateway (timeout = Tempo_entre_pacotes)
             Pacote_UL_novo = Pacote_UL_status.wait(timeout=Tempo_entre_pacotes)
 
             if Pacote_UL_novo:
